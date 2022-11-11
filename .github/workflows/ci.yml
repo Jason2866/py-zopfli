@@ -20,7 +20,7 @@ jobs:
     name: Build Source Distribution
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v3
       with:
         submodules: true
     - name: Set up Python
@@ -33,7 +33,7 @@ jobs:
       run: python setup.py sdist
     - name: Check metadata
       run: twine check dist/*.zip
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         path: dist/*.zip
 

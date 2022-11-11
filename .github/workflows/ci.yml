@@ -61,7 +61,7 @@ jobs:
           - os: ubuntu-latest
             arch: auto
             type: manylinux2010
-            build: "pp* cp310-*"
+            build: "cp{37,38,39}-*"
             CIBW_MANYLINUX_X86_64_IMAGE: manylinux2010
             CIBW_MANYLINUX_I686_IMAGE: manylinux2010
 

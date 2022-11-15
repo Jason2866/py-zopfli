@@ -46,25 +46,33 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-12, windows-latest]
+        os: [macos-12, windows-2022]
         arch: [auto64]
         build: ["*"]
         include:
-          # the manylinux docker images only contain from python3.7 to 3.9
+          # the manylinux1 docker images only contain from python3.7 to 3.9
           - os: ubuntu-latest
             type: manylinux1
             arch: auto
             build: "cp{37,38,39}-*"
             CIBW_MANYLINUX_X86_64_IMAGE: manylinux1
             CIBW_MANYLINUX_I686_IMAGE: manylinux1
+          # the manylinux2010 image also contains python 3.10 and pypy3.7 and 3.8
           - os: ubuntu-latest
             arch: auto
             type: manylinux2010
-            build: "cp{37,38,39}-*"
+            build: "pp{37,38}-* cp310-*"
             CIBW_MANYLINUX_X86_64_IMAGE: manylinux2010
             CIBW_MANYLINUX_I686_IMAGE: manylinux2010
+          # the manylinux2014 image also contains python 3.11 and pypy3.9
+          - os: ubuntu-latest
+            arch: auto
+            type: manylinux2014
+            build: "pp39-* cp311-*"
+            CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+            CIBW_MANYLINUX_I686_IMAGE: manylinux2014
 
-          - os: macos-latest
+          - os: macos-12
             arch: universal2
             build: "*"
 
@@ -98,7 +106,7 @@ jobs:
     strategy:
       matrix:
         # aarch64 uses qemu so it's slow, build each py version in parallel jobs
-        python: [37, 38, 39, 310]
+        python: [37, 38, 39, 310, 311]
         arch: [aarch64]
     steps:
     - uses: actions/checkout@v3

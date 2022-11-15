@@ -51,21 +51,21 @@ jobs:
         build: ["*"]
         include:
           # the manylinux1 docker images only contain from python3.7 to 3.9
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             type: manylinux1
             arch: auto
             build: "cp{37,38,39}-*"
             CIBW_MANYLINUX_X86_64_IMAGE: manylinux1
             CIBW_MANYLINUX_I686_IMAGE: manylinux1
           # the manylinux2010 image also contains python 3.10 and pypy3.7 and 3.8
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             arch: auto
             type: manylinux2010
             build: "pp{37,38}-* cp310-*"
             CIBW_MANYLINUX_X86_64_IMAGE: manylinux2010
             CIBW_MANYLINUX_I686_IMAGE: manylinux2010
           # the manylinux2014 image also contains python 3.11 and pypy3.9
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             arch: auto
             type: manylinux2014
             build: "pp39-* cp311-*"
@@ -129,7 +129,7 @@ jobs:
   deploy:
     name: Download artifacts
     needs: [build_wheels, build_arch_wheels, build_sdist]
-    runs-on: ubuntu-2204
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/download-artifact@v3
       with:

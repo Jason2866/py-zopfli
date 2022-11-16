@@ -1,14 +1,8 @@
-name: Build + Release
+name: Build + GH Release
 
 on:
   push:
-    branches: [master]
     tags: ["v*.*.*"]
-  pull_request:
-    branches: [master]
-  release:
-    types:
-      - published
 
 env:
   CIBW_TEST_EXTRAS: test

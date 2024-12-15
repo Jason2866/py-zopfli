@@ -12,13 +12,13 @@ jobs:
 
   build_sdist:
     name: Build Source Distribution
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: true
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: "3.x"
     - name: Install dependencies
@@ -26,10 +26,11 @@ jobs:
     - name: Build sdist
       run: python setup.py sdist
     - name: Check metadata
-      run: twine check dist/*.zip
-    - uses: actions/upload-artifact@v3
+      run: twine check dist/*.tar.gz
+    - uses: actions/upload-artifact@v4
       with:
-        path: dist/*.zip
+        path: dist/*.tar.gz
+        name: sdist
 
   build_wheels:
     name: ${{ matrix.type }} ${{ matrix.arch }} on ${{ matrix.os }}
@@ -40,45 +41,47 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-12, windows-2022]
+        # macos-13 runners are still x86_64, macos-14 (latest) are arm64; we want to build
+        # the x86_64 wheel on/for x86_64 macs
+        os: [macos-13, windows-latest]
         arch: [auto64]
         build: ["*"]
         include:
-          # the manylinux1 docker images only contain from python3.7 to 3.9
-          - os: ubuntu-22.04
+          # the manylinux1 docker images only contain python3.8 and 3.9
+          - os: ubuntu-latest
             type: manylinux1
             arch: auto
-            build: "cp{37,38,39}-*"
+            build: "cp{38,39}-*"
             CIBW_MANYLINUX_X86_64_IMAGE: manylinux1
             CIBW_MANYLINUX_I686_IMAGE: manylinux1
-          # the manylinux2010 image also contains python 3.10 and pypy3.7 and 3.8
-          - os: ubuntu-22.04
+          # the manylinux2010 image also contains python 3.10 and pypy3.8
+          - os: ubuntu-latest
             arch: auto
             type: manylinux2010
-            build: "pp{37,38}-* cp310-*"
+            build: "pp{38}-* cp310-*"
             CIBW_MANYLINUX_X86_64_IMAGE: manylinux2010
             CIBW_MANYLINUX_I686_IMAGE: manylinux2010
-          # the manylinux2014 image also contains python 3.11 and pypy3.9
-          - os: ubuntu-22.04
+          # the manylinux2014 image also contains python 3.11, 3.12, 3.13 and pypy3.9 and 3.10
+          - os: ubuntu-latest
             arch: auto
             type: manylinux2014
-            build: "pp39-* cp311-*"
+            build: "pp39-* pp310-* cp311-* cp312-* cp313-*"
             CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
             CIBW_MANYLINUX_I686_IMAGE: manylinux2014
 
-          - os: macos-12
+          - os: macos-latest
             arch: universal2
             build: "*"
 
-          - os: windows-2022
+          - os: windows-latest
             arch: auto32
             build: "*"
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: "3.x"
     - name: Install dependencies
@@ -90,20 +93,22 @@ jobs:
         CIBW_MANYLINUX_I686_IMAGE: ${{ matrix.CIBW_MANYLINUX_I686_IMAGE }}
         CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.CIBW_MANYLINUX_X86_64_IMAGE }}
         CIBW_ARCHS: ${{ matrix.arch }}
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         path: wheelhouse/*.whl
+        name: wheels-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.type }}
+
 
   build_arch_wheels:
     name: py${{ matrix.python }} on ${{ matrix.arch }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         # aarch64 uses qemu so it's slow, build each py version in parallel jobs
-        python: [37, 38, 39, 310, 311]
+        python: [38, 39, 310, 311, 312, 313]
         arch: [aarch64]
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: true
     - uses: docker/setup-qemu-action@v1.2.0
@@ -116,19 +121,22 @@ jobs:
       env:
         CIBW_BUILD: cp${{ matrix.python }}-*
         CIBW_ARCHS: ${{ matrix.arch }}
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         path: wheelhouse/*.whl
+        name: wheels-${{ matrix.arch }}-${{ matrix.python }}
 
   deploy:
-    name: Download artifacts
+    name: Upload if release
     needs: [build_wheels, build_arch_wheels, build_sdist]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' && github.event.action == 'published'
+
     steps:
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
-        name: artifact
         path: dist
+        merge-multiple: trueB_ENV
     - name: setenv release tag
       run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
     - name: Release

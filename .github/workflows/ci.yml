@@ -127,11 +127,9 @@ jobs:
         name: wheels-${{ matrix.arch }}-${{ matrix.python }}
 
   deploy:
-    name: Upload if release
+    name: Download artifacts
     needs: [build_wheels, build_arch_wheels, build_sdist]
     runs-on: ubuntu-latest
-    if: github.event_name == 'release' && github.event.action == 'published'
-
     steps:
     - uses: actions/download-artifact@v4
       with:
